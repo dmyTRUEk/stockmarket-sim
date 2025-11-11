@@ -1,0 +1,18 @@
+[package]
+name = "stockmarket-sim"
+version = "0.0.0"
+edition = "2024"
+authors = ["dmyTRUEk"]
+
+[profile.release]
+opt-level = 3
+#lto = "fat"
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "debuginfo"
+#target-cpu = "native" -> RUSTFLAGS='-C target-cpu=native'
+
+[dependencies]
+minifb = { version = "0.28.0", default-features = false, features = ["wayland"] }
+rand = "0.9.2"
