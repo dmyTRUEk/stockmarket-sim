@@ -61,6 +61,8 @@ fn main() {
 
 	let mut stock = Stock::new();
 
+	let mut is_paused: bool = false;
+
 	while window.is_open() && !window.is_key_down(Key::Escape) {
 		let mut is_redraw_needed: bool = false;
 
@@ -72,12 +74,14 @@ fn main() {
 			is_redraw_needed = true;
 		}
 
-		// if window.is_key_pressed_(Key::Q) {
-		// 	todo!()
-		// }
+		if window.is_key_pressed_(Key::Space) {
+			is_paused = !is_paused;
+		}
 
-		stock.next();
-		is_redraw_needed = true;
+		if !is_paused {
+			stock.next();
+			is_redraw_needed = true;
+		}
 
 		if is_redraw_needed {
 			buffer = vec![BLACK.0; w * h];
