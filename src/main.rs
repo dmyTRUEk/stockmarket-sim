@@ -60,6 +60,10 @@ fn main() {
 	window.update_with_buffer(&buffer, w, h).expect(UNABLE_TO_UPDATE_WINDOW_BUFFER);
 
 	let mut stock = Stock::new();
+	let mut player_data = PlayerData {
+		money: 10_000.,
+		shares: vec![0],
+	};
 
 	let mut is_paused: bool = false;
 
@@ -74,9 +78,30 @@ fn main() {
 			is_redraw_needed = true;
 		}
 
+
 		if window.is_key_pressed_(Key::Space) {
 			is_paused = !is_paused;
 		}
+
+		// TODO: i/o to zoom in/out
+
+		if window.is_key_pressed_(Key::Q) {
+			let ssv = stock.get_last_value();
+			if player_data.money > ssv {
+				player_data.money -= ssv;
+				player_data.shares[0] += 1;
+				is_redraw_needed = true;
+			}
+		}
+		if window.is_key_pressed_(Key::A) {
+			let ssv = stock.get_last_value();
+			if player_data.shares[0] > 0 {
+				player_data.shares[0] -= 1;
+				player_data.money += ssv;
+				is_redraw_needed = true;
+			}
+		}
+
 
 		if !is_paused {
 			stock.next();
@@ -121,6 +146,27 @@ fn main() {
 				WHITE,
 				(w as u32, h as u32)
 			);
+
+			buffer.render_text(
+				&format!("MONEY : {}", player_data.money),
+				(10, (h as u32)/2 - 10),
+				WHITE,
+				(w as u32, h as u32)
+			);
+
+			buffer.render_text(
+				&format!("SHARES: {}", player_data.get_total_shares_value(vec![stock.get_last_value()])),
+				(10, (h as u32)/2),
+				WHITE,
+				(w as u32, h as u32)
+			);
+
+			buffer.render_text(
+				&format!("TOTAL : {}", player_data.get_total_value(vec![stock.get_last_value()])),
+				(10, (h as u32)/2 + 10),
+				WHITE,
+				(w as u32, h as u32)
+			);
 		}
 
 		window.update_with_buffer(&buffer, w, h).expect(UNABLE_TO_UPDATE_WINDOW_BUFFER);
@@ -128,6 +174,8 @@ fn main() {
 }
 
 const UNABLE_TO_UPDATE_WINDOW_BUFFER: &str = "unable to update window buffer";
+
+
 
 #[derive(Clone, Copy)]
 struct Color(u32);
@@ -145,8 +193,29 @@ const YELLOW : Color = Color(0xffff00);
 
 
 
+struct PlayerData {
+	money: float,
+	/// number of bought shares in company id = index
+	shares: Vec<u32>,
+}
+impl PlayerData {
+	fn get_total_shares_value(&self, single_share_values: Vec<float>) -> float {
+		assert_eq!(self.shares.len(), single_share_values.len());
+		self.shares.iter().zip(single_share_values)
+			.map(|(n, ssv)| (*n as float) * ssv)
+			.sum()
+	}
+
+	fn get_total_value(&self, single_share_values: Vec<float>) -> float {
+		self.money + self.get_total_shares_value(single_share_values)
+	}
+}
+
+
+
 struct Stock {
 	history: Vec<float>,
+	// TODO(optim): min/max value as fields, updated in `.next()`
 }
 impl Stock {
 	fn new() -> Self {
@@ -190,12 +259,12 @@ impl Stock {
 
 
 
+
+
 fn unlerp(v: float, v_min: float, v_max: float) -> float {
 	// v = v_min * (1-t) + v_max * t
 	(v - v_min) / (v_max - v_min) // = t
 }
-
-
 
 
 
