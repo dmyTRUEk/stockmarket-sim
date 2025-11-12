@@ -142,15 +142,17 @@ fn main() {
 			let v = stock.history.last().unwrap();
 			buffer.render_text(
 				&format!("{v}"),
-				((w as u32)-8*6, (hf * (1. - unlerp(*v, v_min, v_max))) as u32),
+				((w as u32)-8*6*2, (hf * (1. - unlerp(*v, v_min, v_max))) as u32),
 				WHITE,
+				2,
 				(w as u32, h as u32)
 			);
 
 			buffer.render_text(
 				&format!("MONEY : {}", player_data.money),
-				(10, (h as u32)/2 - 10),
+				(10, (h as u32)/2 - 30),
 				WHITE,
+				3,
 				(w as u32, h as u32)
 			);
 
@@ -158,13 +160,15 @@ fn main() {
 				&format!("SHARES: {}", player_data.get_total_shares_value(vec![stock.get_last_value()])),
 				(10, (h as u32)/2),
 				WHITE,
+				3,
 				(w as u32, h as u32)
 			);
 
 			buffer.render_text(
 				&format!("TOTAL : {}", player_data.get_total_value(vec![stock.get_last_value()])),
-				(10, (h as u32)/2 + 10),
+				(10, (h as u32)/2 + 30),
 				WHITE,
+				3,
 				(w as u32, h as u32)
 			);
 		}

@@ -8,54 +8,41 @@ const FONT_H: u32 = 5;
 
 pub trait RenderText {
 	/// render text with top-left corner being `pos`, with Out Of Bounds check
-	fn render_text(&mut self, text: &str, pos: (u32, u32), color: Color, buffer_wh: (u32, u32));
+	fn render_text(&mut self, text: &str, pos: (u32, u32), color: Color, scale: u8, buffer_wh: (u32, u32));
 	/// render char with top-left corner being `pos`, with Out Of Bounds check
-	fn render_char(&mut self, char: char, pos: (u32, u32), color: Color, buffer_wh: (u32, u32));
+	fn render_char(&mut self, char: char, pos: (u32, u32), color: Color, scale: u8, buffer_wh: (u32, u32));
 
-	/// render text with top-left corner being `pos`, WITHOUT Out Of Bounds check
-	fn render_text_unchecked(&mut self, text: &str, pos: (u32, u32), color: Color, buffer_w: u32);
-	/// render char with top-left corner being `pos`, WITHOUT Out Of Bounds check
-	fn render_char_uncheked(&mut self, char: char, pos: (u32, u32), color: Color, buffer_w: u32);
+	// TODO(optim): unchecked versions and use them where its safe to do so
 }
 impl RenderText for Vec<u32> {
-	fn render_text(&mut self, text: &str, mut pos: (u32, u32), color: Color, buffer_wh: (u32, u32)) {
+	fn render_text(&mut self, text: &str, mut pos: (u32, u32), color: Color, scale: u8, buffer_wh: (u32, u32)) {
+		assert!(scale > 0);
 		for c in text.chars() {
-			self.render_char(c, pos, color, buffer_wh);
-			pos.0 += FONT_W + 1;
+			self.render_char(c, pos, color, scale, buffer_wh);
+			pos.0 += (FONT_W + 1) * (scale as u32);
 		}
 	}
 
-	fn render_char(&mut self, char: char, pos: (u32, u32), color: Color, buffer_wh: (u32, u32)) {
+	fn render_char(&mut self, char: char, pos: (u32, u32), color: Color, scale: u8, buffer_wh: (u32, u32)) {
+		assert!(scale > 0);
 		let (w, h) = buffer_wh;
 		let bitmap: Bitmap = get_bitmap_for(char);
 		for y in 0..FONT_H {
 			for x in 0..FONT_W {
-				if bitmap[(y*FONT_W+x) as usize] == 1 {
-					let X = x + pos.0;
-					let Y = y + pos.1;
-					if 0 < X && X < w  &&  0 < Y && Y < h {
-						self[(Y*w+X) as usize] = color.0;
+				if bitmap[(y * FONT_W + x) as usize] == 1 {
+					// top-left corner of scaled pixel block
+					let base_x = pos.0 + x * (scale as u32);
+					let base_y = pos.1 + y * (scale as u32);
+					// draw scaled block
+					for dy in 0..scale as u32 {
+						let Y = base_y + dy;
+						if Y >= h { break }
+						for dx in 0..scale as u32 {
+							let X = base_x + dx;
+							if X >= w { break }
+							self[(Y * w + X) as usize] = color.0;
+						}
 					}
-				}
-			}
-		}
-	}
-
-	fn render_text_unchecked(&mut self, text: &str, mut pos: (u32, u32), color: Color, buffer_w: u32) {
-		for c in text.chars() {
-			self.render_char_uncheked(c, pos, color, buffer_w);
-			pos.0 += FONT_W + 1;
-		}
-	}
-
-	fn render_char_uncheked(&mut self, char: char, pos: (u32, u32), color: Color, buffer_w: u32) {
-		let bitmap: Bitmap = get_bitmap_for(char);
-		for y in 0..FONT_H {
-			for x in 0..FONT_W {
-				if bitmap[(y*FONT_W+x) as usize] == 1 {
-					let X = x + pos.0;
-					let Y = y + pos.1;
-					self[(Y*buffer_w+X) as usize] = color.0;
 				}
 			}
 		}
