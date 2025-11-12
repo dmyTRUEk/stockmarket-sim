@@ -40,7 +40,7 @@ fn main() -> Result<(), u8> {
 	// let mut rng = StdRng::seed_from_u64(string_to_u64(&seed));
 
 	let (mut w, mut h) = (1600, 900);
-	let mut buffer: Vec<u32> = vec![BLACK; w * h];
+	let mut buffer: Vec<u32> = vec![BLACK.0; w * h];
 
 	let mut window = Window::new(
 		"stockmarket-sim",
@@ -76,14 +76,14 @@ fn main() -> Result<(), u8> {
 		is_redraw_needed = true;
 
 		if is_redraw_needed {
-			buffer = vec![BLACK; w * h];
-			let hf = h as float;
+			buffer = vec![BLACK.0; w * h];
 
 			dbg!(stock.history.len(), stock.history.last().unwrap());
 			let history: &[float] = &stock.history[stock.history.len().saturating_sub(w-1)..];
 			// dbg!(history.len(), w);
 			assert!(history.len() < w);
 
+			let hf = h as float;
 			let v_min: float = stock.get_min_value();
 			let v_max: float = stock.get_max_value();
 			// let max_diff: float = v_max - v_min;
@@ -95,11 +95,11 @@ fn main() -> Result<(), u8> {
 				// dbg!(diff);
 				if *v > v_prev {
 					for y in h_curr..h_prev {
-						buffer[w * y + x] = GREEN;
+						buffer[w * y + x] = GREEN.0;
 					}
 				} else {
 					for y in h_prev..h_curr {
-						buffer[w * y + x] = RED;
+						buffer[w * y + x] = RED.0;
 					}
 				}
 				h_prev = h_curr;
@@ -115,12 +115,15 @@ fn main() -> Result<(), u8> {
 
 const UNABLE_TO_UPDATE_WINDOW_BUFFER: &str = "unable to update window buffer";
 
-const BLACK: u32 = 0x000000;
-const WHITE: u32 = 0xffffff;
+#[derive(Clone, Copy)]
+struct Color(u32);
 
-const RED  : u32 = 0xff0000;
-const GREEN: u32 = 0x00ff00;
-const BLUE : u32 = 0x0000ff;
+const BLACK: Color = Color(0x000000);
+const WHITE: Color = Color(0xffffff);
+
+const RED  : Color = Color(0xff0000);
+const GREEN: Color = Color(0x00ff00);
+const BLUE : Color = Color(0x0000ff);
 
 
 
@@ -173,6 +176,7 @@ fn unlerp(v: float, v_min: float, v_max: float) -> float {
 	// v = v_min * (1-t) + v_max * t
 	(v - v_min) / (v_max - v_min) // = t
 }
+
 
 
 
