@@ -65,7 +65,14 @@ fn main() {
 		shares: vec![0],
 	};
 
+	struct Msg {
+		text: String,
+		color: Color,
+		timeout: i32,
+	}
+
 	let mut is_paused: bool = false;
+	let mut msgs: Vec<Msg> = vec![];
 
 	while window.is_open() && !window.is_key_down(Key::Escape) {
 		let mut is_redraw_needed: bool = false;
@@ -90,16 +97,20 @@ fn main() {
 			if player_data.money > ssv {
 				player_data.money -= ssv;
 				player_data.shares[0] += 1;
-				is_redraw_needed = true;
+			} else {
+				msgs.push(Msg{ text:"NOT ENOUGH MONEY TO BUY A SHARE".to_string(), color:RED, timeout:45 });
 			}
+			is_redraw_needed = true;
 		}
 		if window.is_key_pressed_(Key::A) {
 			let ssv = stock.get_last_value();
 			if player_data.shares[0] > 0 {
 				player_data.shares[0] -= 1;
 				player_data.money += ssv;
-				is_redraw_needed = true;
+			} else {
+				msgs.push(Msg{ text:"DONT HAVE A SHARE TO SELL".to_string(), color:RED, timeout:45 });
 			}
+			is_redraw_needed = true;
 		}
 
 
@@ -150,7 +161,7 @@ fn main() {
 
 			buffer.render_text(
 				&format!("MONEY : {}", player_data.money),
-				(10, (h as u32)/2 - 30),
+				(10, 10),
 				WHITE,
 				3,
 				(w as u32, h as u32)
@@ -158,7 +169,7 @@ fn main() {
 
 			buffer.render_text(
 				&format!("SHARES: {}", player_data.get_total_shares_value(vec![stock.get_last_value()])),
-				(10, (h as u32)/2),
+				(10, 40),
 				WHITE,
 				3,
 				(w as u32, h as u32)
@@ -166,11 +177,30 @@ fn main() {
 
 			buffer.render_text(
 				&format!("TOTAL : {}", player_data.get_total_value(vec![stock.get_last_value()])),
-				(10, (h as u32)/2 + 30),
+				(10, 70),
 				WHITE,
 				3,
 				(w as u32, h as u32)
 			);
+
+			let mut msg_indices_to_remove: Vec<u32> = Vec::with_capacity(1);
+			for (i, msg) in msgs.iter_mut().enumerate() {
+				let i = i as u32;
+				buffer.render_text(
+					&msg.text,
+					(10, 105 + 20*i),
+					msg.color,
+					2,
+					(w as u32, h as u32)
+				);
+				msg.timeout -= 1;
+				if msg.timeout <= 0 {
+					msg_indices_to_remove.push(i);
+				}
+			}
+			for i in msg_indices_to_remove.into_iter().rev() {
+				msgs.remove(i as usize);
+			}
 		}
 
 		window.update_with_buffer(&buffer, w, h).expect(UNABLE_TO_UPDATE_WINDOW_BUFFER);
