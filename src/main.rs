@@ -4,6 +4,10 @@
 use minifb::{Key, Window, WindowOptions};
 use rand::{distr::weighted::WeightedIndex, rng, rngs::StdRng, Rng, SeedableRng};
 
+mod font_rendering;
+
+use font_rendering::*;
+
 
 // #[derive(Parser, Debug)]
 // #[clap(
@@ -34,7 +38,7 @@ use rand::{distr::weighted::WeightedIndex, rng, rngs::StdRng, Rng, SeedableRng};
 
 
 
-fn main() -> Result<(), u8> {
+fn main() {
 	// let CliArgs { seed, verbose } = CliArgs::parse();
 
 	// let mut rng = StdRng::seed_from_u64(string_to_u64(&seed));
@@ -105,12 +109,18 @@ fn main() -> Result<(), u8> {
 				h_prev = h_curr;
 				v_prev = *v;
 			}
+
+			let v = stock.history.last().unwrap();
+			buffer.render_text(
+				&format!("{v}"),
+				((w as u32)-8*6, (hf * (1. - unlerp(*v, v_min, v_max))) as u32),
+				WHITE,
+				(w as u32, h as u32)
+			);
 		}
 
 		window.update_with_buffer(&buffer, w, h).expect(UNABLE_TO_UPDATE_WINDOW_BUFFER);
 	}
-
-	Ok(())
 }
 
 const UNABLE_TO_UPDATE_WINDOW_BUFFER: &str = "unable to update window buffer";
@@ -124,6 +134,10 @@ const WHITE: Color = Color(0xffffff);
 const RED  : Color = Color(0xff0000);
 const GREEN: Color = Color(0x00ff00);
 const BLUE : Color = Color(0x0000ff);
+
+const CYAN   : Color = Color(0x00ffff);
+const MAGENTA: Color = Color(0xff00ff);
+const YELLOW : Color = Color(0xffff00);
 
 
 
