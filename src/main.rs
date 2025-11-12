@@ -77,20 +77,32 @@ fn main() -> Result<(), u8> {
 
 		if is_redraw_needed {
 			buffer = vec![BLACK; w * h];
+			let hf = h as float;
 
-			let mut v_prev: float = *stock.history.first().unwrap();
-			for (x, v) in stock.history.iter().skip(1).enumerate() {
-				let diff = v - v_prev;
+			dbg!(stock.history.len(), stock.history.last().unwrap());
+			let history: &[float] = &stock.history[stock.history.len().saturating_sub(w-1)..];
+			// dbg!(history.len(), w);
+			assert!(history.len() < w);
+
+			let v_min: float = stock.get_min_value();
+			let v_max: float = stock.get_max_value();
+			// let max_diff: float = v_max - v_min;
+			let mut v_prev: float = *history.first().unwrap();
+			let mut h_prev: usize = (hf * (1. - unlerp(v_prev, v_min, v_max))) as usize;
+			for (x, v) in history.iter().skip(1).enumerate() {
+				let h_curr = (hf * (1. - unlerp(*v, v_min, v_max))) as usize;
+				// let diff = v - v_prev;
 				// dbg!(diff);
-				if diff > 0. {
-					for y in h/2 - (diff as usize) .. h/2 {
-						buffer[w*y+x] = GREEN;
+				if *v > v_prev {
+					for y in h_curr..h_prev {
+						buffer[w * y + x] = GREEN;
 					}
 				} else {
-					for y in h/2 .. h/2 + ((-diff) as usize) {
-						buffer[w*y+x] = RED;
+					for y in h_prev..h_curr {
+						buffer[w * y + x] = RED;
 					}
 				}
+				h_prev = h_curr;
 				v_prev = *v;
 			}
 		}
@@ -155,6 +167,12 @@ impl Stock {
 	}
 }
 
+
+
+fn unlerp(v: float, v_min: float, v_max: float) -> float {
+	// v = v_min * (1-t) + v_max * t
+	(v - v_min) / (v_max - v_min) // = t
+}
 
 
 
