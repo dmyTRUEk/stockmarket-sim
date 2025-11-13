@@ -374,6 +374,7 @@ impl Stock {
 		let step = rng.random_range(-3. .. 6.);
 		let step = sign * 2_f64.powf(step);
 		let new_value = prev_value + step;
+		let new_value = new_value.abs();
 		self.history.push(new_value);
 		if new_value > self.max { self.max = new_value }
 		if new_value < self.min { self.min = new_value }
