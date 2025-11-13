@@ -147,8 +147,8 @@ fn main() {
 
 			{
 				// render delta bars
-				let v_min: float = stock.history.min();
-				let v_max: float = stock.history.max();
+				let v_min: float = stock.min;
+				let v_max: float = stock.max;
 				let mut v_prev: float = *local_history.first().unwrap();
 				// let mut h_prev: usize = (hf * (1. - unlerp(v_prev, v_min, v_max))) as usize;
 				let mut h_prev: u32 = value_to_screen_h(v_prev, v_min, v_max, hf);
@@ -222,10 +222,10 @@ fn main() {
 			}
 
 			{
-				let current_stock_price = stock.history.last().unwrap();
-				let all_time_high = stock.history.max();
-				let all_time_low = stock.history.min();
-				let csp_y = value_to_screen_h(*current_stock_price, all_time_low, all_time_high, hf) as i32;
+				let current_stock_price = stock.get_last_value();
+				let all_time_high = stock.max;
+				let all_time_low  = stock.min;
+				let csp_y = value_to_screen_h(current_stock_price, all_time_low, all_time_high, hf) as i32;
 				let csp_y = csp_y.min((h as i32) - 6*2);
 				buffer.render_text(
 					&format!("{current_stock_price}"),
@@ -339,7 +339,8 @@ impl PlayerData {
 
 struct Stock {
 	history: Vec<float>,
-	// TODO(optim): min/max value as fields, updated in `.next()`
+	min: float,
+	max: float,
 }
 impl Stock {
 	fn new() -> Self {
@@ -357,6 +358,8 @@ impl Stock {
 	fn from_init_value(value: float) -> Self {
 		Self {
 			history: vec![value],
+			min: value,
+			max: value,
 		}
 	}
 
@@ -372,6 +375,8 @@ impl Stock {
 		let step = sign * 2_f64.powf(step);
 		let new_value = prev_value + step;
 		self.history.push(new_value);
+		if new_value > self.max { self.max = new_value }
+		if new_value < self.min { self.min = new_value }
 	}
 
 	fn get_recent_history_scaled(&self, max_num_of_prices: u32, scale: u32) -> Vec<float> {
